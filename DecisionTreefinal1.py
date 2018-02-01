@@ -32,7 +32,8 @@ def id3(examples, classification_attribute, attributes, global_attributes):
                 negative = check_labels(examples)[1]
                 return 'Yes' if positive > negative else 'No'
             else:
-                attributes.remove(best_attr)
+                if best_attr in attributes:
+                    attributes.remove(best_attr)
                 subtree = id3(branch_examples, classification_attribute, attributes, global_attributes)
                 tree[best_attr][value] = subtree
     return tree
