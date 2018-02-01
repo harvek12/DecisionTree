@@ -89,6 +89,7 @@ def get_error(tree, examples, attributes):
     return (final_watch)
 
 
+# return list of an attribute's unique values
 def find_unique_classifications(examples, attribute, global_attributes):
 
     values = get_values(examples, attribute, global_attributes)
@@ -189,7 +190,7 @@ def gain(examples,classification_attribute, attributes, i, global_attributes):
     return total_element_gain
 
 
-# calculate the info gain for each attibute and choose the highest
+# calculate the info gain for each attribute and choose the highest
 def best_attribute(examples, classification_attribute, attributes, global_attributes):
 
     max_info_gain = 0.0

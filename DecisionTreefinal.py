@@ -11,10 +11,12 @@ def id3(examples, classification_attribute, attributes, global_attributes):
     classes = find_unique_classifications(examples, classification_attribute, global_attributes)
     positive = check_labels(examples, classification_attribute, global_attributes)[0]
     negative = check_labels(examples, classification_attribute, global_attributes)[1]
+    # if the attribute is perfectly partitioned, return its class
     if positive == len(examples):
         return classes[0]
     elif negative == len(examples):
         return classes[1]
+    # if there are no attributes left, return root node with most popular class
     elif len(attributes) == 0 or (len(attributes) == 1 and attributes[0] == classification_attribute):
         return classes[0] if positive > negative else classes[1]
     else:
@@ -23,11 +25,14 @@ def id3(examples, classification_attribute, attributes, global_attributes):
         values = find_unique_classifications(examples, best_attr, global_attributes)
         for value in values:
             branch_examples = get_branches(examples, global_attributes, best_attr, value)
+
+            # if there are no more branch examples to split on, assign the most popular class to this node
             if len(branch_examples) == 0:
                 positive = check_labels(examples, classification_attribute, global_attributes)[0]
                 negative = check_labels(examples, classification_attribute, global_attributes)[1]
                 return classes[0] if positive > negative else classes[1]
             else:
+                # check that the attribute hasn't been removed
                 if best_attr in attributes:
                     attributes.remove(best_attr)
                 subtree = id3(branch_examples, classification_attribute, attributes, global_attributes)
@@ -88,7 +93,7 @@ def get_error(tree, examples, attributes):
     print(final)
     return (final_watch)
 
-
+# return list of an attribute's unique values
 def find_unique_classifications(examples, attribute, global_attributes):
     values = get_values(examples, attribute, global_attributes)
     final_classifications = list(set(values))
@@ -185,7 +190,7 @@ def gain(examples, classification_attribute, attributes, i, global_attributes):
 
     return total_element_gain
 
-# calculate the info gain for each attibute and choose the highest
+# calculate the info gain for each attribute and choose the highest
 def best_attribute(examples, classification_attribute, attributes, global_attributes):
     max_info_gain = 0.0
     if len(attributes) > 1:
