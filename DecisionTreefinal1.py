@@ -1,42 +1,91 @@
 import csv
 import math
+import flatdict
 
-#index of classification_attribute wihtin csv file
-class_attr = 5
 examples = []
 attributes = []
-tree = {}
 
 def id3(examples, classification_attribute, attributes, global_attributes):
-
-    global tree
-    examples = examples[:]
-
-    positive = check_labels(examples)[0]
-    negative = check_labels(examples)[1]
+    classes = find_unique_classifications(examples, classification_attribute, global_attributes)
+    positive = check_labels(examples, classification_attribute, global_attributes)[0]
+    negative = check_labels(examples, classification_attribute, global_attributes)[1]
     if positive == len(examples):
-        return 'Yes'
+        return classes[0]
     elif negative == len(examples):
-        return 'No'
-    elif len(attributes) == 0:
-        return 'Yes' if positive > negative else 'No'
+        return classes[1]
+    elif len(attributes) == 0 or (len(attributes) == 1 and attributes[0] == classification_attribute):
+        return classes[0] if positive > negative else classes[1]
     else:
         best_attr = best_attribute(examples, classification_attribute, attributes, global_attributes)
-        tree[best_attr] = {}
+        tree = {best_attr: {}}
         values = find_unique_classifications(examples, best_attr, global_attributes)
         for value in values:
-            tree[best_attr][value] = {}
             branch_examples = get_branches(examples, global_attributes, best_attr, value)
             if len(branch_examples) == 0:
-                positive = check_labels(examples)[0]
-                negative = check_labels(examples)[1]
-                return 'Yes' if positive > negative else 'No'
+                positive = check_labels(examples, classification_attribute, global_attributes)[0]
+                negative = check_labels(examples, classification_attribute, global_attributes)[1]
+                return classes[0] if positive > negative else classes[1]
             else:
                 if best_attr in attributes:
                     attributes.remove(best_attr)
                 subtree = id3(branch_examples, classification_attribute, attributes, global_attributes)
                 tree[best_attr][value] = subtree
     return tree
+
+
+def get_error(tree, examples, attributes):
+    for k in tree.keys():
+        first = k
+
+    x, y = len(tree[first].keys()), 2
+    label_listA = [[0 for i in range(y)] for j in range(x)]
+
+    label_listB = [None] * len(tree[first].keys())
+    i = 0
+    j = 0
+
+    for v in tree[first].values():
+
+        if type(v) is not str:
+            flat_labels = flatdict.FlatDict(v)
+            label_listA[j][0] = flat_labels.keys()
+            label_listA[j][1] = flat_labels.values()
+            j += 1
+
+        else:
+            label_listB[i] = v
+            i += 1
+    print (label_listA)
+
+    final_watch = []
+    c = []
+    total_error = 0.0
+    count = 0
+    for i in range(0, len(label_listA[0][0])):
+        labelstmp = label_listA[0][0][i]
+        labels = labelstmp.split(":")
+        for j in labels:
+            if j in attributes:
+                labels.remove(j)
+
+        for k in examples:
+            if set(labels) < set(k) and k[0] != label_listA[0][1][i]:
+
+                total_error += 1
+                count += 1
+                watch = 1- (total_error / count)
+                final_watch.append(watch)
+
+                c.append(count)
+            else:
+                count += 1
+
+    print(final_watch)
+    print(c)
+    final = 1 - (total_error / count)
+    print(final)
+    return (final_watch)
+
 
 def find_unique_classifications(examples, attribute, global_attributes):
 
@@ -97,14 +146,12 @@ def get_entropy(examples, subset_label, classification_attribute, attribute, att
         else:
             entropy += (-subset_target_freqs[key]/total) * (math.log(subset_target_freqs[key]/total, 2))
 
-    #print("entropy:")
-    #print(entropy)
     return entropy
+
 
 def get_target_frequencies(examples, subset_label, classification_attribute, attributes, global_attributes):
 
-    #print("hello")
-    #print(subset_label)
+
     frequencies= get_frequencies(examples, classification_attribute, attributes)
     target_frequencies={}
     target_classifications = find_unique_classifications(examples, classification_attribute, global_attributes)
@@ -119,7 +166,6 @@ def get_target_frequencies(examples, subset_label, classification_attribute, att
                 for key in target_frequencies.keys():
                     if examples[i][target] == key:
                         target_frequencies[key]+=1
-    #print(target_frequencies)
 
     return(target_frequencies)
 
@@ -137,23 +183,21 @@ def gain(examples,classification_attribute, attributes, i, global_attributes):
         attribute_entropy += probability * get_entropy(examples, j, classification_attribute, i, attributes, global_attributes)
 
     total_element_gain = set_entropy - attribute_entropy
-    #print(total_element_gain)
 
     return total_element_gain
 
+
+# calculate the info gain for each attibute and choose the highest
 def best_attribute(examples, classification_attribute, attributes, global_attributes):
 
     max_info_gain = 0.0
     best_attr = attributes[0]
-    #calculate the info gain for each attibute and choose the highest
     for attribute in attributes:
         if attribute != classification_attribute:
             attr_gain = gain(examples, classification_attribute, attributes, attribute, global_attributes)
             if attr_gain > max_info_gain:
                 max_info_gain = attr_gain
                 best_attr = attribute
-    #print("best: ")
-    #print(best_attr)
 
     return best_attr
 
@@ -168,16 +212,27 @@ def get_branches(examples, global_attributes, best_attr, value):
     return branches
 
 
-def check_labels(examples):
+def check_labels(examples, classification_attribute, global_attributes):
     positive = 0
     negative = 0
+    labels = find_unique_classifications(examples, classification_attribute, global_attributes)
+
     for x in range(0, len(examples)):
-        if examples[x][4] == 'Yes ':
+        if examples[x][4] == labels[0]:
             positive = positive + 1
-        elif examples[x][4] == 'No ':
+        elif examples[x][4] == labels[1]:
             negative = negative + 1
 
     return [positive, negative]
+
+
+def print_tree(d, keys=()):
+    if type(d) == dict:
+         for k in d:
+            for rv in print_tree(d[k], keys + (k, )):
+                yield rv
+    else:
+        yield (keys, d)
 
 
 def main():
@@ -187,20 +242,21 @@ def main():
         for row in reader:
             examples.append(row)
 
-    for x in range(0,len(examples)):
+    for x in range(0, len(examples)):
         examples[x] = [i.split('\t') for i in examples[x]]
         examples[x] = examples[x][0]
 
     classification_attr = "Play?"
     attributes = examples[0]
-    print(hex(id(attributes)))
     global_attributes = list(attributes)
-    print(hex(id(global_attributes)))
     examples.remove(examples[0])
-    print(examples)
 
-    print(attributes)
-    print(id3(examples, classification_attr, attributes, global_attributes))
+    final_tree = id3(examples, classification_attr, attributes, global_attributes)
+    print(final_tree)
+    for compound_key, val in print_tree(final_tree):
+        print('{} : {}'.format(compound_key, val))
+    get_error(final_tree, examples, global_attributes)
+
 
 if __name__ == "__main__":
     main()
