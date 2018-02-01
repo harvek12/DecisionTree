@@ -5,7 +5,9 @@ import flatdict
 examples = []
 attributes = []
 
+# splits examples based on their best feature and returns dictionary containing tree
 def id3(examples, classification_attribute, attributes, global_attributes):
+
     classes = find_unique_classifications(examples, classification_attribute, global_attributes)
     positive = check_labels(examples, classification_attribute, global_attributes)[0]
     negative = check_labels(examples, classification_attribute, global_attributes)[1]
@@ -200,6 +202,7 @@ def best_attribute(examples, classification_attribute, attributes, global_attrib
     return best_attr
 
 
+# returns all observations in dataset that correspond to a given attribute's value
 def get_branches(examples, global_attributes, best_attr, value):
     branches = []
     index = global_attributes.index(best_attr)
@@ -210,6 +213,7 @@ def get_branches(examples, global_attributes, best_attr, value):
     return branches
 
 
+# tallies the number of positive and negative labels in the dataset
 def check_labels(examples, classification_attribute, global_attributes):
     positive = 0
     negative = 0
