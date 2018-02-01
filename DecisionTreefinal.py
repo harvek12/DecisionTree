@@ -5,10 +5,7 @@ import flatdict
 examples = []
 attributes = []
 
-
 def id3(examples, classification_attribute, attributes, global_attributes):
-    # global tree
-
     classes = find_unique_classifications(examples, classification_attribute, global_attributes)
     positive = check_labels(examples, classification_attribute, global_attributes)[0]
     negative = check_labels(examples, classification_attribute, global_attributes)[1]
@@ -33,15 +30,12 @@ def id3(examples, classification_attribute, attributes, global_attributes):
                     attributes.remove(best_attr)
                 subtree = id3(branch_examples, classification_attribute, attributes, global_attributes)
                 tree[best_attr][value] = subtree
-
     return tree
 
 
 def get_error(tree, examples, attributes):
     for k in tree.keys():
         first = k
-
-    print(first)
 
     x, y = len(tree[first].keys()), 2
     label_listA = [[0 for i in range(y)] for j in range(x)]
@@ -53,7 +47,6 @@ def get_error(tree, examples, attributes):
     for v in tree[first].values():
 
         if type(v) is not str:
-
             flat_labels = flatdict.FlatDict(v)
             label_listA[j][0] = flat_labels.keys()
             label_listA[j][1] = flat_labels.values()
@@ -62,14 +55,8 @@ def get_error(tree, examples, attributes):
         else:
             label_listB[i] = v
             i += 1
-            #   labels = [None] * len(label_listA[0])
-
-            #   labels = [None] * len(label_listA[0])
     print (label_listA)
 
-   # print (label_listB)
-
-    error = [None] * len(label_listA[0][0][0])
     final_watch = []
     c = []
     total_error = 0.0
@@ -80,22 +67,24 @@ def get_error(tree, examples, attributes):
         for j in labels:
             if j in attributes:
                 labels.remove(j)
-        # print(labels)
+
         for k in examples:
             if set(labels) < set(k) and k[0] != label_listA[0][1][i]:
 
                 total_error += 1
                 count += 1
-                watch = total_error / count
+                watch = 1- (total_error / count)
                 final_watch.append(watch)
+
                 c.append(count)
             else:
                 count += 1
 
     print(final_watch)
     print(c)
-    final = total_error / count
+    final = 1 - (total_error / count)
     print(final)
+    return (final_watch)
 
 
 def find_unique_classifications(examples, attribute, global_attributes):
@@ -156,14 +145,10 @@ def get_entropy(examples, subset_label, classification_attribute, attribute, att
         else:
             entropy += (-subset_target_freqs[key] / total) * (math.log(subset_target_freqs[key] / total, 2))
 
-    # print("entropy:")
-    # print(entropy)
     return entropy
 
 
 def get_target_frequencies(examples, subset_label, classification_attribute, attributes, global_attributes):
-    # print("hello")
-    # print(subset_label)
     frequencies = get_frequencies(examples, classification_attribute, attributes)
     target_frequencies = {}
     target_classifications = find_unique_classifications(examples, classification_attribute, global_attributes)
@@ -178,7 +163,6 @@ def get_target_frequencies(examples, subset_label, classification_attribute, att
                 for key in target_frequencies.keys():
                     if examples[i][target] == key:
                         target_frequencies[key] += 1
-    # print(target_frequencies)
 
     return (target_frequencies)
 
@@ -196,26 +180,22 @@ def gain(examples, classification_attribute, attributes, i, global_attributes):
                                                        global_attributes)
 
     total_element_gain = set_entropy - attribute_entropy
-    # print(total_element_gain)
 
     return total_element_gain
 
-
+# calculate the info gain for each attibute and choose the highest
 def best_attribute(examples, classification_attribute, attributes, global_attributes):
     max_info_gain = 0.0
     if len(attributes) > 1:
         best_attr = attributes[1]
     else:
         return 0
-    # calculate the info gain for each attibute and choose the highest
     for attribute in attributes:
         if attribute != classification_attribute:
             attr_gain = gain(examples, classification_attribute, attributes, attribute, global_attributes)
             if attr_gain > max_info_gain:
                 max_info_gain = attr_gain
                 best_attr = attribute
-    # print("best: ")
-    # print(best_attr)
 
     return best_attr
 
@@ -244,10 +224,19 @@ def check_labels(examples, classification_attribute, global_attributes):
 
     return [positive, negative]
 
+#iterate through each key-value in the tree, recursively printing pairs
+def print_tree(d, keys=()):
+    if type(d) == dict:
+         for k in d:
+            for rv in print_tree(d[k], keys + (k, )):
+                yield rv
+    else:
+        yield (keys, d)
+
 
 def main():
-
-    with open('house-votes-84.csv', newline='', encoding='utf-8-sig') as f:
+    #change file name to run on specific dataset (i.e. train or test)
+    with open('house-votes-test.csv', newline='', encoding='utf-8-sig') as f:
         reader = csv.reader(f)
         for row in reader:
             for i in row:
@@ -262,13 +251,11 @@ def main():
     attributes = examples[0]
     global_attributes = list(attributes)
     examples.remove(examples[0])
-    print(examples)
-    print(attributes)
     Decision_tree = id3(examples, classification_attr, attributes, global_attributes)
     print(Decision_tree)
     x = get_error(Decision_tree, examples, global_attributes)
-    # print(x)
-
+    for compound_key, val in print_tree(Decision_tree):
+        print('{} : {}'.format(compound_key, val))
 
 if __name__ == "__main__":
     main()
