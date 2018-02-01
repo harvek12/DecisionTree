@@ -9,13 +9,7 @@ attributes = []
 tree = [[]]
 root = 0
 
-
 def build_tree(examples, classification_attribute, attributes):
-    #   for i in attributes:
-    #       if  (len(find_unique_classifications(examples, i, attributes)) == 1):
-    #   if len(examples) == 0:
-    #       return
-    # else:
     best_attribute = id3(examples, attributes, classification_attribute)
     Decision_tree = {best: {}}
     for i in find_unique_classifications(examples, best_attribute, attributes):
@@ -132,7 +126,6 @@ def gain(examples,classification_attribute, attributes, i):
     total_element_gain = set_entropy - attribute_entropy
     print(total_element_gain)
 
-    #return total_element_gain
     return total_element_gain
 
 def best_attribute(examples, classification_attribute, attributes):
@@ -155,7 +148,6 @@ def best_attribute(examples, classification_attribute, attributes):
 def id3(examples, classification_attribute, attributes):
 
     global root
-    #If all examples are 'yes': return root w/ 'yes' label; if all examples are 'no': return root w/ 'no' label
     positive = check_labels(examples)[0]
     negative = check_labels(examples)[1]
     if positive == len(examples) - 1:
@@ -171,13 +163,10 @@ def id3(examples, classification_attribute, attributes):
         best_attr = best_attribute(examples, classification_attribute, attributes)
         tree[root] = best_attr
         root = root + 1
-        # [examples with that value for best_attribute, e.g. sunny/overcast/rain for Outlook
-        # for each value in best_attr add a branch below root for value
         values = get_values(examples, best_attr, attributes)
         for value in values:
             branch_examples = get_branches(examples, attributes, best_attr, value)
             if len(branch_examples) == 0:
-                # add leaf node with most popular classification_attribute label
                 positive = check_labels(examples)[0]
                 negative = check_labels(examples)[1]
                 tree[root] = 'Yes' if positive > negative else 'No'
@@ -193,7 +182,6 @@ def get_branches(examples, attributes, best_attr, value):
     for x in range(0, len(examples)-1):
         if examples[x][index] == value:
             branches.append(examples[x])
-    #branches = [None] * num
 
     return branches
 
@@ -224,15 +212,8 @@ def main():
     classification_attr = "Play?"
     attributes = examples[0]
     examples.remove(examples[0])
-    # id3(examples, classification_attr, attributes)
     print(examples)
-    # print(len(examples))
-    # print("\n")
     print(attributes)
-    #print(get_values(examples, attributes[1], attributes))
-    #print(get_branches(examples, attributes[1], attributes))
-    #print(get_frequencies(examples, attributes[0], attributes))
-    #print(get_branches(examples, attributes, attributes[0], examples[0][0]))
     print(id3(examples, classification_attr, attributes))
 
 if __name__ == "__main__":
